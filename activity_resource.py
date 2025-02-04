@@ -26,30 +26,39 @@ def main():
         if len(st.session_state.uploaded_files) < 4:
             st.warning("Please upload all required files before proceeding.")
         else:
-            # Read files from session state
-            df_wbs = pd.read_excel(st.session_state.uploaded_files["WBS"], usecols=["PROJECTID", "WBSID", "ROLE"])
-            df_roles = pd.read_excel(st.session_state.uploaded_files["Roles"], usecols=["ROLEID", "RESOURCENAME"])
-            df_validation = pd.read_excel(st.session_state.uploaded_files["Validation"], usecols=["PROJID", "RESOURCEID"])
-            df_comparison = pd.read_excel(st.session_state.uploaded_files["Comparison"], usecols=["PROJECTID", "WBSID", "RESOURCEID"])
+            try:
+                # Read the uploaded Excel files from session state
+                df_wbs = pd.read_excel(st.session_state.uploaded_files["WBS"], usecols=["PROJECTID", "WBSID", "ROLE"])
+                df_roles = pd.read_excel(st.session_state.uploaded_files["Roles"], usecols=["ROLEID", "RESOURCENAME"])
+                df_validation = pd.read_excel(st.session_state.uploaded_files["Validation"], usecols=["PROJID", "RESOURCEID"])
+                df_comparison = pd.read_excel(st.session_state.uploaded_files["Comparison"], usecols=["PROJECTID", "WBSID", "RESOURCEID"])
+                
+                # Display the imported content of File 4
+                st.subheader("Content of Project Activity Resource Validation (File 4):")
+                st.dataframe(df_comparison)
+                
+                # Merge data to determine expected combinations
+                merged_wbs_roles = df_wbs.merge(df_roles, left_on="ROLE", right_on="ROLEID", how="left")
+                expected_combinations = merged_wbs_roles.merge(df_validation, left_on="PROJECTID", right_on="PROJID", how="left")
+                expected_combinations = expected_combinations[["PROJECTID", "WBSID", "RESOURCEID"]].dropna()
+                
+                # Display the result of the calculation from the first 3 files
+                st.subheader("Result of Merging WBS, Roles, and Validation Files:")
+                st.dataframe(expected_combinations)
 
-            # Merge data to determine expected combinations
-            merged_wbs_roles = df_wbs.merge(df_roles, left_on="ROLE", right_on="ROLEID", how="left")
-            expected_combinations = merged_wbs_roles.merge(df_validation, left_on="PROJECTID", right_on="PROJID", how="left")
-            expected_combinations = expected_combinations[["PROJECTID", "WBSID", "RESOURCEID"]].dropna()
+                # Find differences between expected_combinations and df_comparison
+                merged_comparison = expected_combinations.merge(df_comparison, on=["PROJECTID", "WBSID", "RESOURCEID"], how="outer", indicator=True)
+                differences = merged_comparison[merged_comparison["_merge"] != "both"].drop(columns=["_merge"])
 
-            # Find differences between expected_combinations and df_comparison
-            merged_comparison = expected_combinations.merge(df_comparison, on=["PROJECTID", "WBSID", "RESOURCEID"], how="outer", indicator=True)
-            differences = merged_comparison[merged_comparison["_merge"] != "both"].drop(columns=["_merge"])
+                st.subheader("Differences between Calculated and Imported Data:")
+                st.dataframe(differences)
 
-            st.write("Differences found between expected and actual data:")
-            st.dataframe(differences)
-
-            # Allow user to download modified comparison file
-            differences.to_excel("Updated_Validation_File.xlsx", index=False)
-            
-            with open("Updated_Validation_File.xlsx", "rb") as file:
-                st.download_button("Download Updated Validation File", file, "Updated_Validation_File.xlsx")
-
-# Ensure script only runs when explicitly called
-if __name__ == "__main__":
-    main()
+                # Allow user to download modified comparison file
+                differences.to_excel("Updated_Validation_File.xlsx", index=False)
+                
+                with open("Updated_Validation_File.xlsx", "rb") as file:
+                    st.download_button("Download Updated Validation File", file, "Updated_Validation_File.xlsx")
+                
+            except ValueError as e:
+                st.error(f"Error processing files: {e}")
+                st.info("Please make sure all uploaded files contain the required columns.")
