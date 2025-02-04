@@ -15,4 +15,4 @@ elif page == "Activity Resource Validation":
     activity_resource.main()  # Ensure `activity_resource.py` has a `main()` function
 
 elif page == "D365FO Connector":
-    d365fo_connect.main()  # Ensure `activity_resource.py` has a `main()` function
+    d365fo_connect  # Ensure `activity_resource.py` has a `main()` function
