@@ -1,51 +1,42 @@
 import streamlit as st
 import pandas as pd
-from io import BytesIO
 
-try:
-    import openpyxl
-except ImportError:
-    st.error("Het pakket 'openpyxl' ontbreekt. Installeer het met 'pip install openpyxl'.")
-    st.stop()
+st.title("Activity Resource Validation")
 
-def group_data(df, group_cols):
-    grouped_df = df.groupby(group_cols, dropna=False).agg({'Effort in hours': 'sum'}).reset_index()
-    return grouped_df
+# File Uploads
+uploaded_files = {
+    "WBS": st.file_uploader("Upload Project Work Breakdown Structure.xlsx", type="xlsx"),
+    "Roles": st.file_uploader("Upload Project Resource Default Role Setup.xlsx", type="xlsx"),
+    "Validation": st.file_uploader("Upload Project Validation Group Lines.xlsx", type="xlsx"),
+    "Comparison": st.file_uploader("Upload Project Activity Resource Validation.xlsx", type="xlsx")
+}
 
-def convert_df_to_excel(df):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Grouped Data')
-    processed_data = output.getvalue()
-    return processed_data
+if all(uploaded_files.values()):  
+    # Read the uploaded Excel files
+    df_wbs = pd.read_excel(uploaded_files["WBS"], usecols=["PROJECTID", "WBSID", "ROLE"])
+    df_roles = pd.read_excel(uploaded_files["Roles"], usecols=["ROLEID", "RESOURCENAME"])
+    df_validation = pd.read_excel(uploaded_files["Validation"], usecols=["PROJID", "RESOURCEID"])
+    df_comparison = pd.read_excel(uploaded_files["Comparison"], usecols=["PROJECTID", "WBSID", "RESOURCEID"])
 
-def merge_and_compare(files):
-    data_frames = [pd.read_excel(file, engine='openpyxl') for file in files[:3]]
-    combined_df = pd.concat(data_frames).groupby(['Activiteit', 'Resource'], as_index=False).sum()
+    # Merge data to determine expected combinations
+    merged_wbs_roles = df_wbs.merge(df_roles, left_on="ROLE", right_on="ROLEID", how="left")
+    expected_combinations = merged_wbs_roles.merge(df_validation, left_on="PROJECTID", right_on="PROJID", how="left")
+
+    expected_combinations = expected_combinations[["PROJECTID", "WBSID", "RESOURCEID"]].dropna()
+
+    # Find differences between expected_combinations and df_comparison
+    merged_comparison = expected_combinations.merge(df_comparison, on=["PROJECTID", "WBSID", "RESOURCEID"], how="outer", indicator=True)
+
+    differences = merged_comparison[merged_comparison["_merge"] != "both"].drop(columns=["_merge"])
+
+    st.write("Differences found between expected and actual data:")
+    st.dataframe(differences)
+
+    # Allow user to download modified comparison file
+    differences.to_excel("Updated_Validation_File.xlsx", index=False)
     
-    reference_df = pd.read_excel(files[3], engine='openpyxl')
-    merged_df = reference_df.merge(combined_df, on=['Activiteit', 'Resource'], how='outer', suffixes=('_oud', '_nieuw'))
-    
-    merged_df['Wijziging'] = merged_df.apply(lambda row: 'Nieuw' if pd.isna(row['Effort in hours_oud']) else ('Gewijzigd' if row['Effort in hours_oud'] != row['Effort in hours_nieuw'] else 'Ongewijzigd'), axis=1)
-    
-    return merged_df[merged_df['Wijziging'] != 'Ongewijzigd']
+    with open("Updated_Validation_File.xlsx", "rb") as file:
+        st.download_button("Download Updated Validation File", file, "Updated_Validation_File.xlsx")
 
-st.title("Excel Data Groeperen en Transformeren")
-
-uploaded_files = st.file_uploader("Upload vier Excel-bestanden", type=["xls", "xlsx"], accept_multiple_files=True)
-
-if uploaded_files and len(uploaded_files) == 4:
-    try:
-        changes_df = merge_and_compare(uploaded_files)
-        st.write("**Wijzigingen ter controle:**", changes_df.head())
-        
-        if not changes_df.empty:
-            updated_excel = convert_df_to_excel(changes_df)
-            st.download_button(
-                label="Download bijgewerkt bestand",
-                data=updated_excel,
-                file_name="Updated_Data.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-    except Exception as e:
-        st.error(f"Er is een fout opgetreden bij de verwerking van de bestanden: {e}")
+else:
+    st.warning("Please upload all required files to proceed.")
