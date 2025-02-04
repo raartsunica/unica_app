@@ -28,6 +28,13 @@ if uploaded_file:
         df = pd.read_excel(uploaded_file, engine='openpyxl')
         st.write("**Geüploade data voorbeeld:**", df.head())
         
+        rename_dict = {}
+        for col in df.columns:
+            new_name = st.text_input(f"Hernoem kolom '{col}'", col)
+            rename_dict[col] = new_name
+        
+        df.rename(columns=rename_dict, inplace=True)
+        
         group_cols = st.multiselect("Selecteer kolommen om op te groeperen", df.columns[:-1].tolist())
         
         if group_cols:
