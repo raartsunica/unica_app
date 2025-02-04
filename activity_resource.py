@@ -46,7 +46,7 @@ def main():
                 merged_wbs_roles = merged_wbs_roles.dropna(subset=["PROJECTID"])
                 
                 # Keep only necessary columns
-                expected_combinations = expected_combinations[["PROJECTID", "WBSID", "RESOURCEID"]].dropna()
+                expected_combinations = expected_combinations[["PROJECTID", "WBSID", "RESOURCEID", "ROLEID"]].dropna()
 
                 # Display Calculated Results Table (Valid Expected Combinations)
                 st.subheader("Calculated Results from Files 1, 2, and 3")
