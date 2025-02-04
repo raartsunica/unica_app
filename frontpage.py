@@ -8,7 +8,7 @@ st.title("Calculatie converter App")
 # Selection for navigation
 page = st.selectbox("Select a function:", ["Home", "Calculatie naar WBS", "Activity Resource Validation", "D365FO connector"])
 
-if page == "Calc_2_WBS":
+if page == "Calculatie naar WBS":
     Calc_2_WBS.main()  # Ensure `Calc_2_WBS.py` has a `main()` function
 
 elif page == "Activity Resource Validation":
