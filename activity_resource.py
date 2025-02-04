@@ -37,7 +37,7 @@ def main():
                 merged_validation_roles = df_validation.merge(df_roles, left_on="RESOURCEID", right_on="ROLEID", how="left")
 
                 # Step 2: Merge the result of Step 1 with WBS on PROJECTID and ROLEID
-                final_combinations = merged_validation_roles.merge(df_wbs, left_on=["PROJID", "ROLEID"], right_on=["PROJECTID", "ROLE"], how="inner")
+                final_combinations = merged_validation_roles.merge(df_wbs, left_on=["PROJID", "ROLEID"], right_on=["PROJECTID", "ROLE"], how="left")
 
                 # Keep only necessary columns: PROJECTID, WBSID, RESOURCEID
                 final_combinations = final_combinations[["PROJECTID", "WBSID", "RESOURCEID"]].dropna()
