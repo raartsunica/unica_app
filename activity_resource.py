@@ -33,31 +33,25 @@ def main():
                 df_validation = pd.read_excel(st.session_state.uploaded_files["Validation"], usecols=["PROJID", "RESOURCEID"])
                 df_comparison = pd.read_excel(st.session_state.uploaded_files["Comparison"], usecols=["PROJECTID", "WBSID", "RESOURCEID"])
 
-                # Merge WBS with Roles to get Resources (only keep valid ROLE matches)
-                merged_wbs_roles = df_wbs.merge(df_roles, left_on="ROLE", right_on="ROLEID", how="left")
+                # Step 1: Merge Validation with Roles on PROJID and ROLEID
+                merged_validation_roles = df_validation.merge(df_roles, left_on="RESOURCEID", right_on="ROLEID", how="left")
 
-                # 🔹 Filter out rows where ROLEID is missing (avoids incorrect results)
-                merged_wbs_roles = merged_wbs_roles.dropna(subset=["ROLEID"])
+                # Step 2: Merge the result of Step 1 with WBS on PROJECTID and ROLEID
+                final_combinations = merged_validation_roles.merge(df_wbs, left_on=["PROJID", "ROLEID"], right_on=["PROJECTID", "ROLE"], how="inner")
 
-                # Merge with Validation file to get expected Project-Activity-Resource combinations
-                expected_combinations = merged_wbs_roles.merge(df_validation, left_on="PROJECTID", right_on="PROJID", how="left")
-
-                # 🔹 Filter out rows where PROJECTID is missing (avoids incorrect results)
-                merged_wbs_roles = merged_wbs_roles.dropna(subset=["PROJECTID"])
-                
-                # Keep only necessary columns
-                expected_combinations = expected_combinations[["PROJECTID", "WBSID", "RESOURCEID", "ROLEID"]].dropna()
+                # Keep only necessary columns: PROJECTID, WBSID, RESOURCEID
+                final_combinations = final_combinations[["PROJECTID", "WBSID", "RESOURCEID"]].dropna()
 
                 # Display Calculated Results Table (Valid Expected Combinations)
                 st.subheader("Calculated Results from Files 1, 2, and 3")
-                st.dataframe(expected_combinations)
+                st.dataframe(final_combinations)
 
                 # Display File 4 (Comparison File)
                 st.subheader("Contents of File 4: Project Activity Resource Validation")
                 st.dataframe(df_comparison)
 
-                # Find differences between expected_combinations and df_comparison
-                merged_comparison = expected_combinations.merge(
+                # Find differences between final_combinations and df_comparison
+                merged_comparison = final_combinations.merge(
                     df_comparison, on=["PROJECTID", "WBSID", "RESOURCEID"], how="outer", indicator=True
                 )
 
