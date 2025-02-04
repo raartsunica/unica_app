@@ -1,7 +1,7 @@
 import streamlit as st
+import d365fo_connect
 import Calc_2_WBS
-import activity_resource  # Import but don’t execute immediately
-import d365fo_connect # Import but don't execute immediately
+import activity_resource
 
 st.title("Calculatie converter App")
 
