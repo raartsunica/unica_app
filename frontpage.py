@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.title("Project Resource Validation App")
+st.title("Calculation Sheet")
 
 # Button to navigate to different script functionalities
 page = st.selectbox("Select a function:", ["Home", "Calc_2_WBS", "Activity Resource Validation"])
