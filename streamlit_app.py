@@ -19,34 +19,33 @@ def convert_df_to_excel(df):
     processed_data = output.getvalue()
     return processed_data
 
-st.title("Excel Data Groeperen")
+def merge_and_compare(files):
+    data_frames = [pd.read_excel(file, engine='openpyxl') for file in files[:3]]
+    combined_df = pd.concat(data_frames).groupby(['Activiteit', 'Resource'], as_index=False).sum()
+    
+    reference_df = pd.read_excel(files[3], engine='openpyxl')
+    merged_df = reference_df.merge(combined_df, on=['Activiteit', 'Resource'], how='outer', suffixes=('_oud', '_nieuw'))
+    
+    merged_df['Wijziging'] = merged_df.apply(lambda row: 'Nieuw' if pd.isna(row['Effort in hours_oud']) else ('Gewijzigd' if row['Effort in hours_oud'] != row['Effort in hours_nieuw'] else 'Ongewijzigd'), axis=1)
+    
+    return merged_df[merged_df['Wijziging'] != 'Ongewijzigd']
 
-uploaded_file = st.file_uploader("Upload een Excel-bestand", type=["xls", "xlsx"])
+st.title("Excel Data Groeperen en Transformeren")
 
-if uploaded_file:
+uploaded_files = st.file_uploader("Upload vier Excel-bestanden", type=["xls", "xlsx"], accept_multiple_files=True)
+
+if uploaded_files and len(uploaded_files) == 4:
     try:
-        df = pd.read_excel(uploaded_file, engine='openpyxl')
-        st.write("**Geüploade data voorbeeld:**", df.head())
+        changes_df = merge_and_compare(uploaded_files)
+        st.write("**Wijzigingen ter controle:**", changes_df.head())
         
-        rename_dict = {}
-        for col in df.columns:
-            new_name = st.text_input(f"Hernoem kolom '{col}'", col)
-            rename_dict[col] = new_name
-        
-        df.rename(columns=rename_dict, inplace=True)
-        
-        group_cols = st.multiselect("Selecteer kolommen om op te groeperen", df.columns[:-1].tolist())
-        
-        if group_cols:
-            grouped_df = group_data(df, group_cols)
-            st.write("**Gegroepeerde data voorbeeld:**", grouped_df.head())
-            
-            excel_data = convert_df_to_excel(grouped_df)
+        if not changes_df.empty:
+            updated_excel = convert_df_to_excel(changes_df)
             st.download_button(
-                label="Download gegroepeerd bestand",
-                data=excel_data,
-                file_name="Grouped_Data.xlsx",
+                label="Download bijgewerkt bestand",
+                data=updated_excel,
+                file_name="Updated_Data.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
     except Exception as e:
-        st.error(f"Er is een fout opgetreden bij het inlezen van het bestand: {e}")
+        st.error(f"Er is een fout opgetreden bij de verwerking van de bestanden: {e}")
