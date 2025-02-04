@@ -3,8 +3,6 @@ import requests
 import pandas as pd
 import streamlit as st
 
-def main():
-
 # Functie om OAuth-token te verkrijgen
 def get_access_token(client_id, client_secret, tenant_id):
     authority = f"https://login.microsoftonline.com/{tenant_id}"
@@ -34,6 +32,7 @@ def post_data_to_odata(odata_url, access_token, data):
     response = requests.post(odata_url, json=data, headers=headers)
     return response.status_code, response.text
 
+def main():
 # Streamlit UI
 st.title('Gegevensbeheer in Dynamics 365 F&O')
 
