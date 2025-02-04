@@ -1,12 +1,11 @@
 import streamlit as st
-import subprocess
 
 st.title("Project Resource Validation App")
 
-# Button to run Calc_2_WBS.py
-if st.button("Run Calc_2_WBS"):
-    subprocess.run(["python", "Calc_2_WBS.py"])
+# Button to navigate to different script functionalities
+page = st.selectbox("Select a function:", ["Home", "Calc_2_WBS", "Activity Resource Validation"])
 
-# Button to run activity_resource.py
-if st.button("Run Activity Resource Validation"):
-    subprocess.run(["python", "activity_resource.py"])
+if page == "Calc_2_WBS":
+    import Calc_2_WBS  # This runs the script within the same Streamlit session
+elif page == "Activity Resource Validation":
+    import activity_resource  # Runs activity_resource.py
