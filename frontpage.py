@@ -6,13 +6,16 @@ import activity_resource
 st.title("Calculatie converter App")
 
 # Selection for navigation
-page = st.selectbox("Select a function:", ["Home", "Calculatie naar WBS", "Activity Resource Validation", "D365FO connector"])
+# page = st.selectbox("Select a function:", ["Home", "Calculatie naar WBS", "Activity Resource Validation", "D365FO connector"])
 
-if page == "Calculatie naar WBS":
+# if page == "Calculatie naar WBS":
+if st.button("Calculatie naar WBS"):
     Calc_2_WBS.main()  # Ensure `Calc_2_WBS.py` has a `main()` function
 
-elif page == "Activity Resource Validation":
+# elif page == "Activity Resource Validation":
+if st.button("Aanmaken WBS + Resource connectie"):
     activity_resource.main()  # Ensure `activity_resource.py` has a `main()` function
 
-elif page == "D365FO Connector":
+# elif page == "D365FO Connector":
+if st.button("D365FO Connectie"):    
     d365fo_connect  # Ensure `activity_resource.py` has a `main()` function
