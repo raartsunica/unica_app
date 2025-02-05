@@ -12,7 +12,7 @@ def main():
     elif menu == "Calculatie naar WBS":
         st.header("Calculatie naar WBS")
         load_file()
-        process_data()
+        process_data(df)
     
     elif menu == "Combineren Activiteit en Resource":
         st.header("Combineren Activiteit en Resource")
