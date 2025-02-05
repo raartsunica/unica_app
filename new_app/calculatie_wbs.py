@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
 import io
+
 def download_result():
     if 'processed_df' in st.session_state:
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             st.session_state['processed_df'].to_excel(writer, index=False)
         st.download_button("Download resultaat", output.getvalue(), file_name="wbs_result.xlsx")
-
 
 def load_file():
     file = st.file_uploader("Upload een Excel-bestand", type=["xlsx"])
@@ -19,12 +19,54 @@ def load_file():
 def process_data():
     if 'df' in st.session_state:
         df = st.session_state['df']
+        
+        # Dynamisch de kolommen voor groeperen en sommeren kiezen
         group_cols = st.multiselect("Kies kolommen om te groeperen", df.columns)
         sum_cols = st.multiselect("Kies kolommen om te sommeren", df.columns)
+        
         if group_cols and sum_cols:
+            # Groeperen en sommeren van de gegevens
             grouped_df = df.groupby(group_cols)[sum_cols].sum().reset_index()
-            st.session_state['processed_df'] = grouped_df
-            st.dataframe(grouped_df)
+            
+            # Maak een nieuwe lijst voor de hiërarchische output
+            hierarchical_df = []
+            counter = 1
+            
+            # Groeperen op de geselecteerde kolommen en door de groepen itereren
+            for group, group_data in grouped_df.groupby(group_cols[0]):  # Groep op basis van de eerste geselecteerde kolom
+                # Voeg de regel voor deze groep toe (bijvoorbeeld: "1", "Groep: [waarde]")
+                hierarchical_df.append([f"{counter}", f"{group_cols[0]}: {group}"])
+                subgroup_counter = 1
+                
+                # Als er meer dan 1 groep is, groepeer dan op de tweede kolom
+                if len(group_cols) > 1:
+                    for subgroup, subgroup_data in group_data.groupby(group_cols[1]):
+                        # Voeg de subgroep regel toe (bijvoorbeeld: "1.1", "Subgroep: [waarde]")
+                        hierarchical_df.append([f"{counter}.{subgroup_counter}", f"{group_cols[1]}: {subgroup}"])
+                        
+                        # Voeg de samengevoegde waarden voor deze subgroep toe
+                        for idx, row in subgroup_data.iterrows():
+                            hierarchical_df.append([f"{counter}.{subgroup_counter}.{idx+1}",
+                                                     "_".join([str(val) for val in row[group_cols].values]),  # Maak een ID gebaseerd op de samengevoegde kolomwaarden
+                                                     *row[sum_cols].values])  # Voeg de gesommeerde waarden toe
+                        subgroup_counter += 1
+                else:
+                    # Voeg de samengevoegde waarden toe zonder subgroepen
+                    for idx, row in group_data.iterrows():
+                        hierarchical_df.append([f"{counter}.{idx+1}",
+                                                 "_".join([str(val) for val in row[group_cols].values]),
+                                                 *row[sum_cols].values])  # Voeg de gesommeerde waarden toe
+                counter += 1
+            
+            # Zet de hiërarchische output om naar een DataFrame
+            hierarchical_df = pd.DataFrame(hierarchical_df, columns=["ID", "Omschrijving"] + sum_cols)
+            st.session_state['processed_df'] = hierarchical_df
+            st.dataframe(hierarchical_df)
 
 def main():
-    load_file
+    load_file()
+    process_data()
+    download_result()
+
+if __name__ == "__main__":
+    main()
