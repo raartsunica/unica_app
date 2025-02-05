@@ -1,6 +1,6 @@
 import streamlit as st
-from functie1 import load_file, process_data, download_result
-from functie2 import get_dynamics_data, filter_data, merge_data, compare_target
+# from functie1 import load_file, process_data, download_result
+# from functie2 import get_dynamics_data, filter_data, merge_data, compare_target
 
 def main():
     st.title("Power Platform App")
