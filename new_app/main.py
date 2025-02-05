@@ -1,5 +1,5 @@
 import streamlit as st
-from calculatie_wbs import load_file, process_data, download_result
+from calculatie_wbs import load_file, process_data
 from activity_resource import get_dynamics_data, filter_data, merge_data, compare_target
 
 def main():
@@ -13,7 +13,6 @@ def main():
         st.header("Calculatie naar WBS")
         load_file()
         process_data()
-        download_result()
     
     elif menu == "Combineren Activiteit en Resource":
         st.header("Combineren Activiteit en Resource")
