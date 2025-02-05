@@ -37,44 +37,30 @@ def process_data():
             hierarchical_df = []
             counter = 1
             
-            # Groeperen op de geselecteerde kolommen en door de groepen itereren
-            for group, group_data in grouped_df.groupby(hierarchy_cols[0] if hierarchy_cols else group_cols[0]):  # Groep op basis van de eerste geselecteerde kolom
-                # Voeg de regel voor deze groep toe (bijvoorbeeld: "1", "Groep: [waarde]")
-                row_data = [f"{counter}", f"{hierarchy_cols[0] if hierarchy_cols else group_cols[0]}: {group}"]
-                
-                # Voeg de exclusieve groeperingskolommen toe als losse kolommen
-                for col in exclude_group_cols:
-                    if col in group_data.columns:  # Check of de kolom bestaat
-                        row_data.append(group_data[col].iloc[0])  # Neem de eerste waarde van deze kolommen
+            # Functie om hiërarchie dynamisch te bouwen
+            def build_hierarchy(group_data, hierarchy_columns, prefix=""):
+                nonlocal counter
+                for group, subgroup_data in group_data.groupby(hierarchy_columns[0]):
+                    row_data = [f"{prefix}{counter}", f"{hierarchy_columns[0]}: {group}"]
+                    for col in exclude_group_cols:
+                        row_data.append(subgroup_data[col].iloc[0] if col in subgroup_data else None)
+                    hierarchical_df.append(row_data)
+                    counter += 1
+                    
+                    # Als er nog meer kolommen in de hiërarchie zijn, herhaal het proces
+                    if len(hierarchy_columns) > 1:
+                        build_hierarchy(subgroup_data, hierarchy_columns[1:], prefix=f"{prefix}{counter - 1}.")
                     else:
-                        row_data.append(None)  # Als de kolom niet bestaat, voeg None toe
-                
-                hierarchical_df.append(row_data)
-                subgroup_counter = 1
-                
-                # Als er meer dan 1 groep is, groepeer dan op de tweede kolom
-                if len(hierarchy_cols) > 1:
-                    for subgroup, subgroup_data in group_data.groupby(hierarchy_cols[1]):
-                        # Voeg de subgroep regel toe (bijvoorbeeld: "1.1", "Subgroep: [waarde]")
-                        hierarchical_df.append([f"{counter}.{subgroup_counter}", f"{hierarchy_cols[1]}: {subgroup}"] + 
-                                                [subgroup_data[col].iloc[0] if col in subgroup_data.columns else None for col in exclude_group_cols])  # Voeg ook de exclusieve kolommen toe
-                        
-                        # Voeg de samengevoegde waarden voor deze subgroep toe
+                        # Voeg de samengevoegde waarden toe zonder verdere subgroepen
                         for idx, row in subgroup_data.iterrows():
-                            hierarchical_df.append([f"{counter}.{subgroup_counter}.{idx+1}",
-                                                     "_".join([str(val) for val in row[hierarchy_cols].values]),  # Maak een ID gebaseerd op de samengevoegde kolomwaarden
+                            hierarchical_df.append([f"{prefix}{counter}.{idx+1}",
+                                                     "_".join([str(val) for val in row[hierarchy_columns].values]),  # Maak een ID gebaseerd op de samengevoegde kolomwaarden
                                                      *row[sum_cols].values] + 
-                                                [row[col] if col in row.index else None for col in exclude_group_cols])  # Voeg de exclusieve kolommen toe
-                        subgroup_counter += 1
-                else:
-                    # Voeg de samengevoegde waarden toe zonder subgroepen
-                    for idx, row in group_data.iterrows():
-                        hierarchical_df.append([f"{counter}.{idx+1}",
-                                                 "_".join([str(val) for val in row[hierarchy_cols].values]),
-                                                 *row[sum_cols].values] + 
-                                                [row[col] if col in row.index else None for col in exclude_group_cols])  # Voeg de exclusieve kolommen toe
-                counter += 1
+                                                    [row[col] if col in row.index else None for col in exclude_group_cols])  # Voeg de exclusieve kolommen toe
 
+            # Bouw de volledige hiërarchie vanaf het begin
+            build_hierarchy(grouped_df, hierarchy_cols)
+            
             # Controleer of alle rijen dezelfde lengte hebben voordat we ze in een DataFrame plaatsen
             columns = ["ID", "Omschrijving"] + sum_cols + exclude_group_cols
             corrected_hierarchical_df = []
