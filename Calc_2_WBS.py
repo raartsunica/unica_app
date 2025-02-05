@@ -52,3 +52,7 @@ def main():
         except Exception as e:
             st.error(f"Er is een fout opgetreden bij het inlezen van het bestand: {e}")
 
+
+# Ensure main() runs only when called directly
+if __name__ == "__main__":
+    main()
