@@ -41,6 +41,9 @@ def process_data():
             def build_hierarchy(group_data, hierarchy_columns, prefix=""):
                 nonlocal hierarchical_df
                 
+                # Debug: print de kolomnamen van de groepering
+                print("Kolomnamen van de groepering:", group_data.columns)
+                
                 # Groeperen op het eerste niveau
                 for group, subgroup_data in group_data.groupby(hierarchy_columns[0]):
                     row_data = [f"{prefix}{level_counter[len(hierarchy_columns) - len(hierarchy_columns)]}", f"{hierarchy_columns[0]}: {group}"]
@@ -50,7 +53,7 @@ def process_data():
                     
                     # Nummering per niveau herstarten
                     level_counter[len(hierarchy_columns) - len(hierarchy_columns)] += 1
-
+            
                     # Als er nog meer kolommen in de hiërarchie zijn, herhaal het proces
                     if len(hierarchy_columns) > 1:
                         build_hierarchy(subgroup_data, hierarchy_columns[1:], prefix=f"{prefix}{level_counter[len(hierarchy_columns) - len(hierarchy_columns)]}.")
