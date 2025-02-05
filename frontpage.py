@@ -10,7 +10,7 @@ st.title("Calculatie converter App")
 
 # if page == "Calculatie naar WBS":
 if st.button("Calculatie naar WBS"):
-    Calc_2_WBS.main()  # Ensure `Calc_2_WBS.py` has a `main()` function
+    Calc_2_WBS
 
 # elif page == "Activity Resource Validation":
 if st.button("Aanmaken WBS + Resource connectie"):
