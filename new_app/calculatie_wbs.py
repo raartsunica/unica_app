@@ -90,7 +90,7 @@ def main():
 
     # Verwerk de data als het bestand geladen is
     if df is not None:
-        process_data(df)
+        process_data(df)  # Zorg ervoor dat we df doorgeven aan process_data()
 
 if __name__ == "__main__":
     main()
