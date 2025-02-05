@@ -40,14 +40,21 @@ def process_data():
             # Groeperen op de geselecteerde kolommen en door de groepen itereren
             for group, group_data in grouped_df.groupby(hierarchy_cols[0] if hierarchy_cols else group_cols[0]):  # Groep op basis van de eerste geselecteerde kolom
                 # Voeg de regel voor deze groep toe (bijvoorbeeld: "1", "Groep: [waarde]")
-                hierarchical_df.append([f"{counter}", f"{hierarchy_cols[0] if hierarchy_cols else group_cols[0]}: {group}"])
+                row_data = [f"{counter}", f"{hierarchy_cols[0] if hierarchy_cols else group_cols[0]}: {group}"]
+                
+                # Voeg de exclusieve groeperingskolommen toe als losse kolommen
+                for col in exclude_group_cols:
+                    row_data.append(group_data[col].iloc[0])  # Neem de eerste waarde van deze kolommen
+                
+                hierarchical_df.append(row_data)
                 subgroup_counter = 1
                 
                 # Als er meer dan 1 groep is, groepeer dan op de tweede kolom
                 if len(hierarchy_cols) > 1:
                     for subgroup, subgroup_data in group_data.groupby(hierarchy_cols[1]):
                         # Voeg de subgroep regel toe (bijvoorbeeld: "1.1", "Subgroep: [waarde]")
-                        hierarchical_df.append([f"{counter}.{subgroup_counter}", f"{hierarchy_cols[1]}: {subgroup}"])
+                        hierarchical_df.append([f"{counter}.{subgroup_counter}", f"{hierarchy_cols[1]}: {subgroup}"] + 
+                                                [subgroup_data[col].iloc[0] for col in exclude_group_cols])  # Voeg ook de exclusieve kolommen toe
                         
                         # Voeg de samengevoegde waarden voor deze subgroep toe
                         for idx, row in subgroup_data.iterrows():
@@ -60,11 +67,13 @@ def process_data():
                     for idx, row in group_data.iterrows():
                         hierarchical_df.append([f"{counter}.{idx+1}",
                                                  "_".join([str(val) for val in row[hierarchy_cols].values]),
-                                                 *row[sum_cols].values])  # Voeg de gesommeerde waarden toe
+                                                 *row[sum_cols].values] + 
+                                                [row[col] for col in exclude_group_cols])  # Voeg de exclusieve kolommen toe
                 counter += 1
             
             # Zet de hiërarchische output om naar een DataFrame
-            hierarchical_df = pd.DataFrame(hierarchical_df, columns=["ID", "Omschrijving"] + sum_cols)
+            columns = ["ID", "Omschrijving"] + sum_cols + exclude_group_cols
+            hierarchical_df = pd.DataFrame(hierarchical_df, columns=columns)
             st.session_state['processed_df'] = hierarchical_df
             st.dataframe(hierarchical_df)
 
