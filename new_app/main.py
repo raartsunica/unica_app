@@ -11,8 +11,13 @@ def main():
     
     elif menu == "Calculatie naar WBS":
         st.header("Calculatie naar WBS")
-        load_file()
-        process_data(df)
+        
+        # Laad het bestand en krijg het DataFrame
+        df = load_file()  
+        
+        if df is not None:
+            # Verwerk het DataFrame als het is geladen
+            process_data(df)  
     
     elif menu == "Combineren Activiteit en Resource":
         st.header("Combineren Activiteit en Resource")
