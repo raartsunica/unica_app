@@ -23,8 +23,13 @@ def process_data():
         # Dynamisch de kolommen voor groeperen en sommeren kiezen
         group_cols = st.multiselect("Kies kolommen om te groeperen", df.columns)
         sum_cols = st.multiselect("Kies kolommen om te sommeren", df.columns)
+        exclude_group_cols = st.multiselect("Kies kolommen die wel in de groepering meegenomen moeten worden, maar niet in de hiërarchie", df.columns)
         
+        # Zorg ervoor dat kolommen voor groepering en summatie correct geselecteerd zijn
         if group_cols and sum_cols:
+            # Verwijder de geselecteerde 'exclusieve' groeperingskolommen uit de hiërarchie
+            hierarchy_cols = [col for col in group_cols if col not in exclude_group_cols]
+            
             # Groeperen en sommeren van de gegevens
             grouped_df = df.groupby(group_cols)[sum_cols].sum().reset_index()
             
@@ -33,28 +38,28 @@ def process_data():
             counter = 1
             
             # Groeperen op de geselecteerde kolommen en door de groepen itereren
-            for group, group_data in grouped_df.groupby(group_cols[0]):  # Groep op basis van de eerste geselecteerde kolom
+            for group, group_data in grouped_df.groupby(hierarchy_cols[0] if hierarchy_cols else group_cols[0]):  # Groep op basis van de eerste geselecteerde kolom
                 # Voeg de regel voor deze groep toe (bijvoorbeeld: "1", "Groep: [waarde]")
-                hierarchical_df.append([f"{counter}", f"{group_cols[0]}: {group}"])
+                hierarchical_df.append([f"{counter}", f"{hierarchy_cols[0] if hierarchy_cols else group_cols[0]}: {group}"])
                 subgroup_counter = 1
                 
                 # Als er meer dan 1 groep is, groepeer dan op de tweede kolom
-                if len(group_cols) > 1:
-                    for subgroup, subgroup_data in group_data.groupby(group_cols[1]):
+                if len(hierarchy_cols) > 1:
+                    for subgroup, subgroup_data in group_data.groupby(hierarchy_cols[1]):
                         # Voeg de subgroep regel toe (bijvoorbeeld: "1.1", "Subgroep: [waarde]")
-                        hierarchical_df.append([f"{counter}.{subgroup_counter}", f"{group_cols[1]}: {subgroup}"])
+                        hierarchical_df.append([f"{counter}.{subgroup_counter}", f"{hierarchy_cols[1]}: {subgroup}"])
                         
                         # Voeg de samengevoegde waarden voor deze subgroep toe
                         for idx, row in subgroup_data.iterrows():
                             hierarchical_df.append([f"{counter}.{subgroup_counter}.{idx+1}",
-                                                     "_".join([str(val) for val in row[group_cols].values]),  # Maak een ID gebaseerd op de samengevoegde kolomwaarden
+                                                     "_".join([str(val) for val in row[hierarchy_cols].values]),  # Maak een ID gebaseerd op de samengevoegde kolomwaarden
                                                      *row[sum_cols].values])  # Voeg de gesommeerde waarden toe
                         subgroup_counter += 1
                 else:
                     # Voeg de samengevoegde waarden toe zonder subgroepen
                     for idx, row in group_data.iterrows():
                         hierarchical_df.append([f"{counter}.{idx+1}",
-                                                 "_".join([str(val) for val in row[group_cols].values]),
+                                                 "_".join([str(val) for val in row[hierarchy_cols].values]),
                                                  *row[sum_cols].values])  # Voeg de gesommeerde waarden toe
                 counter += 1
             
