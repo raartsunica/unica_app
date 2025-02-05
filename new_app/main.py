@@ -1,5 +1,5 @@
 import streamlit as st
-from calculate_wbs import load_file, process_data, download_result
+from calculatie_wbs import load_file, process_data, download_result
 from activity_resource import get_dynamics_data, filter_data, merge_data, compare_target
 
 def main():
