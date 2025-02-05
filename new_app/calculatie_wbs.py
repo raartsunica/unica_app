@@ -73,6 +73,13 @@ def process_data():
                                                  *row[sum_cols].values] + 
                                                 [row[col] if col in row.index else None for col in exclude_group_cols])  # Voeg de exclusieve kolommen toe
                 counter += 1
+
+            # DEBUG: Print de lengtes van de rijen in hierarchical_df en de kolomnamen
+            for idx, row in enumerate(hierarchical_df):
+                if len(row) != len(columns):
+                    st.write(f"Fout op rij {idx+1}: Aantal kolommen komt niet overeen.")
+                    st.write(f"Aantal kolommen in rij: {len(row)}, verwacht: {len(columns)}")
+                    st.write(f"Rij: {row}")
             
             # Zet de hiërarchische output om naar een DataFrame
             columns = ["ID", "Omschrijving"] + sum_cols + exclude_group_cols
