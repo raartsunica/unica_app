@@ -26,3 +26,5 @@ def process_data():
             st.session_state['processed_df'] = grouped_df
             st.dataframe(grouped_df)
 
+def main():
+    load_file
