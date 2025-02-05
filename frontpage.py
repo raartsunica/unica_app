@@ -18,4 +18,4 @@ if st.button("Aanmaken WBS + Resource connectie"):
 
 # elif page == "D365FO Connector":
 if st.button("D365FO Connectie"):    
-    d365fo_connect  # Ensure `activity_resource.py` has a `main()` function
+    d365fo_connect 
