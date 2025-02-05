@@ -42,30 +42,41 @@ def process_data(df):
     hierarchical_data = []
     level_counter = {i: 1 for i in range(len(hierarchy_columns))}  # begin nummering per niveau
 
-    def build_hierarchy(data, hierarchy_columns, prefix=""):
-        """Bouw de hiërarchie op basis van de geselecteerde kolommen."""
-        nonlocal hierarchical_data
-
-        if len(hierarchy_columns) == 0:
-            return
+def build_hierarchy(data, hierarchy_columns, prefix=""):
+    """Bouw een hiërarchie door te groeperen en op te tellen."""
+    if not hierarchy_columns:
+        return []
+    
+    first_column = hierarchy_columns[0]
+    
+    # Controleer of de kolom in de DataFrame bestaat
+    if first_column not in data.columns:
+        raise KeyError(f"Kolom '{first_column}' bestaat niet in de DataFrame.")
+    
+    grouped_data = []
+    
+    # Groepeer op de eerste kolom in hierarchy_columns
+    for group, subgroup_data in data.groupby(first_column):
+        level_counter = len(grouped_data) + 1
+        # Voeg het huidige groepniveau toe aan de hierarchie
+        group_data = [f"{prefix}{level_counter}"]  # Voeg de nummering toe
         
-        first_column = hierarchy_columns[0]
-        for group, subgroup_data in data.groupby(first_column):
-            row = [f"{prefix}{level_counter[len(hierarchy_columns) - len(hierarchy_columns)]}",
-                   "_".join(str(group).split())]  # Maak de omschrijving
-
-            # Voeg samengevoegde kolomwaarden toe
-            for col in separate_columns:
-                row.append(subgroup_data[col].iloc[0] if col in subgroup_data else None)
-
-            hierarchical_data.append(row)
-
-            # Nummering per niveau
-            level_counter[len(hierarchy_columns) - len(hierarchy_columns)] += 1
-
-            # Recursief herhaal voor de volgende niveau's
-            build_hierarchy(subgroup_data, hierarchy_columns[1:], prefix=f"{prefix}{level_counter[len(hierarchy_columns) - len(hierarchy_columns)]}.")
-
+        # Voeg de waarde van de groeperende kolom toe als omschrijving
+        group_data.append(f"{first_column}: {group}")
+        
+        # Verwerk de volgende kolom in de hiërarchie, indien aanwezig
+        if len(hierarchy_columns) > 1:
+            group_data.extend(build_hierarchy(subgroup_data, hierarchy_columns[1:], prefix=f"{prefix}{level_counter}."))
+        else:
+            # Voeg de overige kolommen toe die niet in de hiërarchie zitten
+            for col in subgroup_data.columns:
+                if col != first_column:  # Voeg alleen kolommen toe die niet in de hiërarchie zitten
+                    group_data.append(subgroup_data[col].sum())  # Gebruik de som van de kolommen
+        
+        grouped_data.append(group_data)
+    
+    return grouped_data
+    
     # Start met het bouwen van de hiërarchie
     build_hierarchy(grouped_df, hierarchy_columns)
 
