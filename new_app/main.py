@@ -1,5 +1,5 @@
 import streamlit as st
-from calculatie_wbs import load_file, process_data
+from calculatie_wbs import load_file, process_data, download_result
 from activity_resource import get_dynamics_data, filter_data, merge_data, compare_target
 
 def main():
@@ -18,6 +18,8 @@ def main():
         if df is not None:
             # Verwerk het DataFrame als het is geladen
             process_data(df)  
+
+        download_result()
     
     elif menu == "Combineren Activiteit en Resource":
         st.header("Combineren Activiteit en Resource")
