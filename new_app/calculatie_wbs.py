@@ -44,7 +44,10 @@ def process_data():
                 
                 # Voeg de exclusieve groeperingskolommen toe als losse kolommen
                 for col in exclude_group_cols:
-                    row_data.append(group_data[col].iloc[0])  # Neem de eerste waarde van deze kolommen
+                    if col in group_data.columns:  # Check of de kolom bestaat
+                        row_data.append(group_data[col].iloc[0])  # Neem de eerste waarde van deze kolommen
+                    else:
+                        row_data.append(None)  # Als de kolom niet bestaat, voeg None toe
                 
                 hierarchical_df.append(row_data)
                 subgroup_counter = 1
@@ -54,7 +57,7 @@ def process_data():
                     for subgroup, subgroup_data in group_data.groupby(hierarchy_cols[1]):
                         # Voeg de subgroep regel toe (bijvoorbeeld: "1.1", "Subgroep: [waarde]")
                         hierarchical_df.append([f"{counter}.{subgroup_counter}", f"{hierarchy_cols[1]}: {subgroup}"] + 
-                                                [subgroup_data[col].iloc[0] for col in exclude_group_cols])  # Voeg ook de exclusieve kolommen toe
+                                                [subgroup_data[col].iloc[0] if col in subgroup_data.columns else None for col in exclude_group_cols])  # Voeg ook de exclusieve kolommen toe
                         
                         # Voeg de samengevoegde waarden voor deze subgroep toe
                         for idx, row in subgroup_data.iterrows():
@@ -68,7 +71,7 @@ def process_data():
                         hierarchical_df.append([f"{counter}.{idx+1}",
                                                  "_".join([str(val) for val in row[hierarchy_cols].values]),
                                                  *row[sum_cols].values] + 
-                                                [row[col] for col in exclude_group_cols])  # Voeg de exclusieve kolommen toe
+                                                [row[col] if col in row.index else None for col in exclude_group_cols])  # Voeg de exclusieve kolommen toe
                 counter += 1
             
             # Zet de hiërarchische output om naar een DataFrame
