@@ -17,10 +17,20 @@ def process_data(df):
     
     # Selecteer kolommen voor hiërarchie
     hierarchy_columns = st.multiselect("Kies kolommen voor de hiërarchie", df.columns.tolist())
+    st.write(f"Selected hierarchy columns: {hierarchy_columns}")  # Print de geselecteerde kolommen voor de hiërarchie
+    
+    # Controleer of de geselecteerde kolommen bestaan in de DataFrame
+    for column in hierarchy_columns:
+        if column not in df.columns:
+            st.error(f"Kolom '{column}' bestaat niet in de DataFrame.")
+            return
     
     # Selecteer kolommen om te groeperen
     group_columns = st.multiselect("Kies kolommen om te groeperen", df.columns.tolist())
+    st.write(f"Selected group columns: {group_columns}")  # Print de geselecteerde kolommen voor groeperen
     
+    # Het vervolg van je code...
+
     # Selecteer kolommen om te sommeren
     sum_columns = st.multiselect("Kies kolommen om te sommeren", df.columns.tolist())
     
@@ -48,6 +58,7 @@ def process_data(df):
             return []
         
         first_column = hierarchy_columns[0]
+        print(f"Processing column: {first_column}")  # Debug: welke kolom wordt nu verwerkt?
         
         # Controleer of de kolom in de DataFrame bestaat
         if first_column not in data.columns:
@@ -57,6 +68,8 @@ def process_data(df):
         
         # Groepeer op de eerste kolom in hierarchy_columns
         for group, subgroup_data in data.groupby(first_column):
+            print(f"Grouping by {first_column}: {group}")  # Debug: wat is de groep?
+            
             level_counter = len(grouped_data) + 1
             # Voeg het huidige groepniveau toe aan de hierarchie
             group_data = [f"{prefix}{level_counter}"]  # Voeg de nummering toe
