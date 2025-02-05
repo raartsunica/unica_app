@@ -63,7 +63,8 @@ def process_data():
                         for idx, row in subgroup_data.iterrows():
                             hierarchical_df.append([f"{counter}.{subgroup_counter}.{idx+1}",
                                                      "_".join([str(val) for val in row[hierarchy_cols].values]),  # Maak een ID gebaseerd op de samengevoegde kolomwaarden
-                                                     *row[sum_cols].values])  # Voeg de gesommeerde waarden toe
+                                                     *row[sum_cols].values] + 
+                                                [row[col] if col in row.index else None for col in exclude_group_cols])  # Voeg de exclusieve kolommen toe
                         subgroup_counter += 1
                 else:
                     # Voeg de samengevoegde waarden toe zonder subgroepen
@@ -74,18 +75,18 @@ def process_data():
                                                 [row[col] if col in row.index else None for col in exclude_group_cols])  # Voeg de exclusieve kolommen toe
                 counter += 1
 
-            # Zet de hiërarchische output om naar een DataFrame
-            # Zorg ervoor dat columns expliciet als lijst wordt gedefinieerd
+            # Controleer of alle rijen dezelfde lengte hebben voordat we ze in een DataFrame plaatsen
             columns = ["ID", "Omschrijving"] + sum_cols + exclude_group_cols
-            for idx, row in enumerate(hierarchical_df):
-                # DEBUG: Print de lengtes van de rijen in hierarchical_df en de kolomnamen
-                if len(row) != len(columns):
-                    st.write(f"Fout op rij {idx+1}: Aantal kolommen komt niet overeen.")
-                    st.write(f"Aantal kolommen in rij: {len(row)}, verwacht: {len(columns)}")
-                    st.write(f"Rij: {row}")
+            corrected_hierarchical_df = []
+
+            # Voeg lege kolommen toe indien nodig om inconsistentie in lengte te vermijden
+            for row in hierarchical_df:
+                while len(row) < len(columns):
+                    row.append(None)  # Voeg None toe tot de rij de juiste lengte heeft
+                corrected_hierarchical_df.append(row)
             
             # Zet de lijst van rijen om naar een DataFrame met de juiste kolomnamen
-            hierarchical_df = pd.DataFrame(hierarchical_df, columns=columns)
+            hierarchical_df = pd.DataFrame(corrected_hierarchical_df, columns=columns)
             st.session_state['processed_df'] = hierarchical_df
             st.dataframe(hierarchical_df)
 
