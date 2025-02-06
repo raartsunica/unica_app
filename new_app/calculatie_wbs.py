@@ -105,7 +105,7 @@ def process_data(df):
 
 # Download de bewerkte gegevens als een Excel-bestand
 def download_result():
-    if 'result_df' in st.session_state:
+    # if 'result_df' in st.session_state:
         output = io.BytesIO()  # Een object in het geheugen om de Excel-data op te slaan
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             st.session_state['result_df'].to_excel(writer, index=False)  # Schrijf de DataFrame naar Excel
