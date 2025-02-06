@@ -12,8 +12,12 @@ def generate_wbs(df, hierarchy_cols, group_cols, sum_cols):
     df[group_cols] = df[group_cols].astype(str)
     df[sum_cols] = df[sum_cols].astype(float)
     
-    # Groeperen en sommeren
-    grouped_df = df.groupby(group_cols, as_index=False).agg({col: 'sum' for col in sum_cols})
+    # Groeperen en sommeren, en hiërarchie-kolommen behouden
+    agg_dict = {col: 'sum' for col in sum_cols}
+    for col in hierarchy_cols:
+        agg_dict[col] = 'first'
+    
+    grouped_df = df.groupby(group_cols, as_index=False).agg(agg_dict)
     
     # Genereer "Omschrijving" kolom met underscore gescheiden waarden uit de hiërarchie kolommen
     grouped_df["Omschrijving"] = grouped_df[hierarchy_cols].astype(str).agg("_".join, axis=1)
