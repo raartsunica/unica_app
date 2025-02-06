@@ -46,6 +46,8 @@ def generate_wbs(df, hierarchy_cols, group_cols, sum_cols):
         
         # Genereer hiërarchisch nummer
         number = ".".join(str(counters[tuple(level_keys[:i+1])]) for i in range(len(level_keys)))
+        row_dict = row.to_dict()
+        row_dict["WBS"] = number
         hierarchy_numbers.append(number)
         
         # Voeg aggregatieniveaus toe
@@ -58,10 +60,9 @@ def generate_wbs(df, hierarchy_cols, group_cols, sum_cols):
             parent_row["WBS"] = ".".join(str(counters[tuple(parent_key[:j+1])]) for j in range(i+1))
             expanded_rows.append(parent_row)
         
-        expanded_rows.append(row.to_dict())
+        expanded_rows.append(row_dict)
     
     expanded_df = pd.DataFrame(expanded_rows)
-    expanded_df.insert(0, "WBS", hierarchy_numbers + [row["WBS"] for row in expanded_rows if "WBS" in row])
     return expanded_df
 
 # Streamlit app
