@@ -122,5 +122,7 @@ def main():
     if df is not None:
         process_data(df)  # Zorg ervoor dat we df doorgeven aan process_data()
 
+    download_result()
+
 if __name__ == "__main__":
     main()
