@@ -22,15 +22,15 @@ def generate_wbs(df, hierarchy_cols, group_cols, sum_cols):
     # Genereer "Omschrijving" kolom met underscore gescheiden waarden uit de hiërarchie kolommen
     grouped_df["Omschrijving"] = grouped_df[hierarchy_cols].astype(str).agg("_".join, axis=1)
     
-    # Hiërarchie genereren
+    # Hiërarchie genereren inclusief aggregatieniveaus
     grouped_df = grouped_df.sort_values(by=group_cols)
     hierarchy_numbers = []
+    expanded_rows = []
     counters = {}
     
     for _, row in grouped_df.iterrows():
         level_keys = [row[col] for col in group_cols]
         
-        # Reset counters bij nieuw niveau
         for i in range(len(level_keys)):
             key = tuple(level_keys[:i+1])
             if key not in counters:
@@ -47,9 +47,22 @@ def generate_wbs(df, hierarchy_cols, group_cols, sum_cols):
         # Genereer hiërarchisch nummer
         number = ".".join(str(counters[tuple(level_keys[:i+1])]) for i in range(len(level_keys)))
         hierarchy_numbers.append(number)
+        
+        # Voeg aggregatieniveaus toe
+        for i in range(len(level_keys)):
+            parent_key = level_keys[:i+1] + ["00"] * (len(level_keys) - (i+1))
+            parent_row = {col: parent_key[j] for j, col in enumerate(group_cols)}
+            parent_row.update({col: "00" for col in hierarchy_cols if col not in group_cols})
+            parent_row.update({col: 0 for col in sum_cols})
+            parent_row["Omschrijving"] = "_".join(parent_key)
+            parent_row["WBS"] = ".".join(str(counters[tuple(parent_key[:j+1])]) for j in range(i+1))
+            expanded_rows.append(parent_row)
+        
+        expanded_rows.append(row.to_dict())
     
-    grouped_df.insert(0, "WBS", hierarchy_numbers)
-    return grouped_df
+    expanded_df = pd.DataFrame(expanded_rows)
+    expanded_df.insert(0, "WBS", hierarchy_numbers + [row["WBS"] for row in expanded_rows if "WBS" in row])
+    return expanded_df
 
 # Streamlit app
 st.title("WBS Generator")
